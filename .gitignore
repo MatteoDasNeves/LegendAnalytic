@@ -1,3 +1,4 @@
+# Android Studio / Gradle
 *.iml
 .gradle
 /local.properties
@@ -12,4 +13,29 @@
 /captures
 .externalNativeBuild
 .cxx
+# Contient la clé API Riot : ne jamais versionner
 local.properties
+
+# Compiled class file
+*.class
+
+# Log file
+*.log
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+# Le wrapper Gradle est nécessaire pour construire le projet
+!gradle/wrapper/gradle-wrapper.jar
+
+# virtual machine crash logs
+hs_err_pid*
+replay_pid*
+
+# Kotlin Gradle plugin data
+.kotlin/
