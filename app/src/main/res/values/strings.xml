@@ -1,0 +1,95 @@
+<resources>
+    <string name="app_name">LegendAnalytics</string>
+
+    <!-- Recherche -->
+    <string name="search_title">Rechercher un joueur</string>
+    <string name="search_subtitle">Consultez les parties récentes d\'un joueur League of Legends</string>
+    <string name="search_riot_id_label">Riot ID</string>
+    <string name="search_riot_id_placeholder">Pseudo#TAG</string>
+    <string name="search_region_label">Région</string>
+    <string name="search_button">Rechercher</string>
+    <string name="search_clear">Effacer</string>
+    <string name="search_history_title">Recherches récentes</string>
+    <string name="search_history_clear">Tout effacer</string>
+    <string name="search_history_remove">Supprimer de l\'historique</string>
+    <string name="search_history_empty">Aucune recherche récente</string>
+    <string name="search_invalid_format">Format invalide. Utilisez Pseudo#TAG (ex. Faker#KR1).</string>
+
+    <!-- Erreurs -->
+    <string name="error_not_found">Joueur introuvable. Vérifiez le Riot ID et la région.</string>
+    <string name="error_network">Problème de connexion. Vérifiez votre accès à Internet.</string>
+    <string name="error_invalid_key">Clé API Riot invalide ou expirée. Générez une nouvelle clé sur developer.riotgames.com.</string>
+    <string name="error_missing_key">Aucune clé API configurée. Ajoutez RIOT_API_KEY dans local.properties (voir README).</string>
+    <string name="error_rate_limited">Trop de requêtes. Réessayez dans %1$d s.</string>
+    <string name="error_rate_limited_generic">Trop de requêtes. Réessayez dans un instant.</string>
+    <string name="error_server">Le serveur Riot a répondu avec une erreur (%1$d).</string>
+    <string name="error_unknown">Une erreur inattendue est survenue.</string>
+    <string name="error_partial_matches">%1$d partie(s) n\'ont pas pu être chargées.</string>
+    <string name="retry">Réessayer</string>
+    <string name="back">Retour</string>
+
+    <!-- Profil -->
+    <string name="profile_level">Niveau %1$d</string>
+    <string name="profile_refresh">Actualiser</string>
+    <string name="profile_recent_matches">Parties récentes</string>
+    <string name="profile_no_matches">Aucune partie récente.</string>
+    <string name="profile_load_more">Charger plus</string>
+    <string name="rank_solo_duo">Classé Solo/Duo</string>
+    <string name="rank_flex">Classé Flex</string>
+    <string name="rank_unranked">Non classé</string>
+    <string name="rank_lp">%1$d LP</string>
+    <string name="rank_record">%1$dV %2$dD</string>
+    <string name="rank_winrate">%1$d %% de victoires</string>
+
+    <!-- Parties -->
+    <string name="outcome_victory">Victoire</string>
+    <string name="outcome_defeat">Défaite</string>
+    <string name="outcome_remake">Remake</string>
+    <string name="kda_ratio">%1$s KDA</string>
+    <string name="kda_perfect">Parfait</string>
+    <string name="cs_value">%1$d CS (%2$s)</string>
+    <string name="kill_participation">P/Kill %1$d %%</string>
+    <string name="champion_level">Niv. %1$d</string>
+
+    <!-- Ancienneté -->
+    <string name="time_just_now">À l\'instant</string>
+    <string name="time_minutes_ago">il y a %1$d min</string>
+    <string name="time_hours_ago">il y a %1$d h</string>
+    <string name="time_days_ago">il y a %1$d j</string>
+    <string name="time_months_ago">il y a %1$d mois</string>
+    <string name="time_years_ago">il y a %1$d an(s)</string>
+
+    <!-- Détail de partie -->
+    <string name="match_detail_title">Détail de la partie</string>
+    <string name="team_blue">Équipe bleue</string>
+    <string name="team_red">Équipe rouge</string>
+    <string name="team_kills_gold">%1$d kills · %2$s or</string>
+    <string name="header_damage">Dégâts</string>
+    <string name="header_gold">Or</string>
+    <string name="header_cs">CS</string>
+    <string name="header_vision">Vision</string>
+    <string name="objective_towers">Tours</string>
+    <string name="objective_inhibitors">Inhibiteurs</string>
+    <string name="objective_dragons">Dragons</string>
+    <string name="objective_barons">Barons</string>
+    <string name="objective_heralds">Hérauts</string>
+    <string name="objective_grubs">Larves</string>
+    <string name="unknown_player">Joueur inconnu</string>
+
+    <!-- Modes de jeu -->
+    <string name="queue_ranked_solo">Classé Solo/Duo</string>
+    <string name="queue_ranked_flex">Classé Flex</string>
+    <string name="queue_normal_draft">Normale (Draft)</string>
+    <string name="queue_normal_blind">Normale (Aveugle)</string>
+    <string name="queue_quickplay">Partie rapide</string>
+    <string name="queue_swiftplay">Partie express</string>
+    <string name="queue_aram">ARAM</string>
+    <string name="queue_aram_mayhem">ARAM : Chaos</string>
+    <string name="queue_arena">Arena</string>
+    <string name="queue_urf">URF</string>
+    <string name="queue_one_for_all">Un pour tous</string>
+    <string name="queue_nexus_blitz">Nexus Blitz</string>
+    <string name="queue_coop_ai">Coop vs IA</string>
+    <string name="queue_custom">Personnalisée</string>
+    <string name="queue_clash">Clash</string>
+</resources>
