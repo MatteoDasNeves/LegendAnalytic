@@ -1,6 +1,6 @@
 package com.example.legendanalytics.data.repository
 
-import com.example.legendanalytics.data.local.MatchMemoryCache
+import com.example.legendanalytics.data.local.MatchCache
 import com.example.legendanalytics.data.mapper.toDomain
 import com.example.legendanalytics.data.remote.RiotApi
 import com.example.legendanalytics.data.remote.safeCall
@@ -18,7 +18,7 @@ import kotlinx.coroutines.sync.withPermit
 
 class MatchRepositoryImpl(
     private val api: RiotApi,
-    private val cache: MatchMemoryCache,
+    private val cache: MatchCache,
     /** Nombre maximal de détails de parties chargés simultanément (clé de dev : 20 req/s). */
     maxConcurrentRequests: Int = 4,
 ) : MatchRepository {

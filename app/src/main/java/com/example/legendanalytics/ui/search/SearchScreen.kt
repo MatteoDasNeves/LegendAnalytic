@@ -1,7 +1,9 @@
 package com.example.legendanalytics.ui.search
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,7 +29,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -43,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -52,6 +54,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.legendanalytics.R
 import com.example.legendanalytics.domain.model.Region
 import com.example.legendanalytics.domain.model.SearchHistoryEntry
+import com.example.legendanalytics.ui.common.SectionTitle
+import com.example.legendanalytics.ui.common.centeredMaxWidth
 import com.example.legendanalytics.ui.common.message
 import com.example.legendanalytics.ui.navigation.ProfileRoute
 
@@ -78,6 +82,7 @@ fun SearchScreen(
         ) {
             item {
                 SearchForm(
+                    modifier = Modifier.centeredMaxWidth(SearchMaxWidth),
                     state = state,
                     onQueryChange = viewModel::onQueryChange,
                     onRegionChange = viewModel::onRegionChange,
@@ -89,10 +94,9 @@ fun SearchScreen(
                 Spacer(Modifier.height(24.dp))
             }
             item {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = stringResource(R.string.search_history_title),
-                        style = MaterialTheme.typography.titleMedium,
+                Row(Modifier.centeredMaxWidth(SearchMaxWidth), verticalAlignment = Alignment.CenterVertically) {
+                    SectionTitle(
+                        stringResource(R.string.search_history_title),
                         modifier = Modifier.weight(1f),
                     )
                     if (history.isNotEmpty()) {
@@ -106,7 +110,7 @@ fun SearchScreen(
                         text = stringResource(R.string.search_history_empty),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 8.dp),
+                        modifier = Modifier.centeredMaxWidth(SearchMaxWidth).padding(vertical = 8.dp),
                     )
                 }
             }
@@ -116,12 +120,19 @@ fun SearchScreen(
                     enabled = !state.isLoading,
                     onClick = { viewModel.searchFromHistory(entry) },
                     onRemove = { viewModel.removeFromHistory(entry) },
+                    modifier = Modifier.centeredMaxWidth(SearchMaxWidth),
                 )
-                HorizontalDivider()
+                Spacer(Modifier.height(8.dp))
             }
         }
     }
 }
+
+/** Un formulaire étiré sur toute une tablette serait illisible : on le borne. */
+private val SearchMaxWidth = 560.dp
+
+/** En dessous de cette largeur, la région passe sous le Riot ID pour lui laisser la place. */
+private val StackedFormWidth = 340.dp
 
 @Composable
 private fun SearchForm(
@@ -129,38 +140,54 @@ private fun SearchForm(
     onQueryChange: (String) -> Unit,
     onRegionChange: (Region) -> Unit,
     onSearch: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(stringResource(R.string.search_title), style = MaterialTheme.typography.headlineSmall)
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            stringResource(R.string.app_name).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(top = 24.dp),
+        )
+        Text(stringResource(R.string.search_title), style = MaterialTheme.typography.headlineMedium)
         Text(
             stringResource(R.string.search_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
-            OutlinedTextField(
-                value = state.query,
-                onValueChange = onQueryChange,
-                modifier = Modifier.weight(1f),
-                label = { Text(stringResource(R.string.search_riot_id_label)) },
-                placeholder = { Text(stringResource(R.string.search_riot_id_placeholder)) },
-                singleLine = true,
-                isError = state.error != null,
-                trailingIcon = {
-                    if (state.query.isNotEmpty()) {
-                        IconButton(onClick = { onQueryChange("") }) {
-                            Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.search_clear))
+        BoxWithConstraints {
+            val stacked = maxWidth < StackedFormWidth
+            val queryField = @Composable { fieldModifier: Modifier ->
+                OutlinedTextField(
+                    value = state.query,
+                    onValueChange = onQueryChange,
+                    modifier = fieldModifier,
+                    label = { Text(stringResource(R.string.search_riot_id_label)) },
+                    placeholder = { Text(stringResource(R.string.search_riot_id_placeholder)) },
+                    singleLine = true,
+                    isError = state.error != null,
+                    trailingIcon = {
+                        if (state.query.isNotEmpty()) {
+                            IconButton(onClick = { onQueryChange("") }) {
+                                Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.search_clear))
+                            }
                         }
-                    }
-                },
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = { onSearch() }),
-            )
-            RegionSelector(
-                selected = state.region,
-                onSelected = onRegionChange,
-                modifier = Modifier.width(112.dp),
-            )
+                    },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = { onSearch() }),
+                )
+            }
+            if (stacked) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    queryField(Modifier.fillMaxWidth())
+                    RegionSelector(state.region, onRegionChange, Modifier.fillMaxWidth())
+                }
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
+                    queryField(Modifier.weight(1f))
+                    RegionSelector(state.region, onRegionChange, Modifier.width(112.dp))
+                }
+            }
         }
         state.error?.let { error ->
             Text(
@@ -208,7 +235,7 @@ private fun RegionSelector(
             singleLine = true,
             label = { Text(stringResource(R.string.search_region_label)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+            modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             Region.entries.forEach { region ->
@@ -230,18 +257,21 @@ private fun HistoryItem(
     enabled: Boolean,
     onClick: () -> Unit,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.surface)
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(vertical = 4.dp),
+            .padding(start = 14.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             Icons.Default.Person,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = MaterialTheme.colorScheme.primary,
         )
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {

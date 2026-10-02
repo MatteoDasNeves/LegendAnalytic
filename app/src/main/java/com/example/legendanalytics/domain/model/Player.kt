@@ -22,6 +22,15 @@ data class PlayerProfile(
     val profileIconId: Int,
     val soloDuo: RankedEntry?,
     val flex: RankedEntry?,
+    /** Champions les plus maîtrisés, du plus au moins joué. Vide si l'appel a échoué. */
+    val topMasteries: List<ChampionMastery> = emptyList(),
+)
+
+data class ChampionMastery(
+    val championId: Int,
+    val level: Int,
+    val points: Int,
+    val lastPlayMillis: Long,
 )
 
 data class SearchHistoryEntry(

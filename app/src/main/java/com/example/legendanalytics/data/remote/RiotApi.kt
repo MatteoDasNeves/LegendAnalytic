@@ -1,6 +1,7 @@
 package com.example.legendanalytics.data.remote
 
 import com.example.legendanalytics.data.remote.dto.AccountDto
+import com.example.legendanalytics.data.remote.dto.ChampionMasteryDto
 import com.example.legendanalytics.data.remote.dto.LeagueEntryDto
 import com.example.legendanalytics.data.remote.dto.MatchDto
 import com.example.legendanalytics.data.remote.dto.SummonerDto
@@ -37,6 +38,16 @@ class RiotApi(
 
     suspend fun getLeagueEntries(puuid: String, region: Region): List<LeagueEntryDto> =
         execute(region.platformHost, "lol", "league", "v4", "entries", "by-puuid", puuid).body()
+
+    suspend fun getTopMasteries(puuid: String, region: Region, count: Int): List<ChampionMasteryDto> =
+        execute(
+            region.platformHost, "lol", "champion-mastery", "v4", "champion-masteries", "by-puuid", puuid, "top",
+            query = mapOf("count" to count.toString()),
+        ).body()
+
+    /** Toutes les maîtrises du joueur, de la plus haute à la plus basse. */
+    suspend fun getAllMasteries(puuid: String, region: Region): List<ChampionMasteryDto> =
+        execute(region.platformHost, "lol", "champion-mastery", "v4", "champion-masteries", "by-puuid", puuid).body()
 
     suspend fun getMatchIds(puuid: String, region: Region, start: Int, count: Int): List<String> =
         execute(

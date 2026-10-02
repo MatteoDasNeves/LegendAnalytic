@@ -6,6 +6,8 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.example.legendanalytics.ui.affinity.AffinityScreen
+import com.example.legendanalytics.ui.affinity.AffinityViewModel
 import com.example.legendanalytics.ui.match.MatchDetailScreen
 import com.example.legendanalytics.ui.match.MatchDetailViewModel
 import com.example.legendanalytics.ui.profile.ProfileScreen
@@ -48,7 +50,14 @@ fun AppNavigation() {
                     onMatchClick = { matchId ->
                         backStack.add(MatchDetailRoute(matchId, route.puuid, route.region))
                     },
+                    onAffinitiesClick = {
+                        backStack.add(AffinityRoute(route.puuid, route.gameName, route.tagLine, route.region))
+                    },
                 )
+            }
+            entry<AffinityRoute> { route ->
+                val viewModel = koinViewModel<AffinityViewModel> { parametersOf(route) }
+                AffinityScreen(viewModel = viewModel, onBack = ::goBack)
             }
             entry<MatchDetailRoute> { route ->
                 val viewModel = koinViewModel<MatchDetailViewModel> { parametersOf(route) }

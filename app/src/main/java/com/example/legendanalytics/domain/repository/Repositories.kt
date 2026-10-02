@@ -2,6 +2,7 @@ package com.example.legendanalytics.domain.repository
 
 import com.example.legendanalytics.domain.model.Account
 import com.example.legendanalytics.domain.model.AppResult
+import com.example.legendanalytics.domain.model.ChampionMastery
 import com.example.legendanalytics.domain.model.Match
 import com.example.legendanalytics.domain.model.MatchPage
 import com.example.legendanalytics.domain.model.PlayerProfile
@@ -14,6 +15,8 @@ import kotlinx.coroutines.flow.Flow
 interface PlayerRepository {
     suspend fun findAccount(riotId: RiotId, region: Region): AppResult<Account>
     suspend fun getProfile(puuid: String, region: Region): AppResult<PlayerProfile>
+    /** Toutes les maîtrises du joueur, de la plus haute à la plus basse. */
+    suspend fun getMasteries(puuid: String, region: Region): AppResult<List<ChampionMastery>>
 }
 
 interface MatchRepository {

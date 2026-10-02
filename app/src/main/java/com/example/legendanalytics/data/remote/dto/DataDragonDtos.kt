@@ -21,3 +21,20 @@ data class SummonerSpellDto(
 data class DataDragonImageDto(
     val full: String,
 )
+
+/** /cdn/{version}/data/fr_FR/champion.json */
+@Serializable
+data class ChampionListDto(
+    val data: Map<String, ChampionSummaryDto> = emptyMap(),
+)
+
+@Serializable
+data class ChampionSummaryDto(
+    /** Identifiant Data Dragon, ex. "MonkeyKing". */
+    val id: String,
+    /** Identifiant numérique sous forme de chaîne, ex. "62". */
+    val key: String,
+    val name: String = "",
+    /** Classes du champion, la principale en premier, ex. ["Fighter", "Tank"]. */
+    val tags: List<String> = emptyList(),
+)

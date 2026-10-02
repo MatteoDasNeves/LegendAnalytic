@@ -1,8 +1,10 @@
 package com.example.legendanalytics.di
 
 import com.example.legendanalytics.BuildConfig
-import com.example.legendanalytics.data.local.MatchMemoryCache
-import com.example.legendanalytics.data.local.SearchHistoryDataSource
+import com.example.legendanalytics.data.local.MatchCache
+import com.example.legendanalytics.data.local.RoomMatchCache
+import com.example.legendanalytics.data.local.SearchHistoryLocalDataSource
+import com.example.legendanalytics.data.local.db.LegendDatabase
 import com.example.legendanalytics.data.remote.DataDragonApi
 import com.example.legendanalytics.data.remote.HttpClientFactory
 import com.example.legendanalytics.data.remote.RiotApi
@@ -13,7 +15,9 @@ import com.example.legendanalytics.domain.repository.MatchRepository
 import com.example.legendanalytics.domain.repository.PlayerRepository
 import com.example.legendanalytics.domain.repository.SearchHistoryRepository
 import com.example.legendanalytics.domain.repository.StaticDataRepository
+import com.example.legendanalytics.ui.affinity.AffinityViewModel
 import com.example.legendanalytics.ui.match.MatchDetailViewModel
+import com.example.legendanalytics.ui.navigation.AffinityRoute
 import com.example.legendanalytics.ui.navigation.MatchDetailRoute
 import com.example.legendanalytics.ui.navigation.ProfileRoute
 import com.example.legendanalytics.ui.profile.ProfileViewModel
@@ -33,18 +37,25 @@ val networkModule = module {
     single { DataDragonApi(get(DDRAGON_CLIENT)) }
 }
 
+val databaseModule = module {
+    single { LegendDatabase.create(androidContext()) }
+    single { get<LegendDatabase>().searchHistoryDao() }
+    single { get<LegendDatabase>().matchDao() }
+}
+
 val dataModule = module {
-    single { MatchMemoryCache() }
+    single<MatchCache> { RoomMatchCache(get()) }
     single<PlayerRepository> { PlayerRepositoryImpl(get()) }
     single<MatchRepository> { MatchRepositoryImpl(get(), get()) }
     single<StaticDataRepository> { StaticDataRepositoryImpl(get()) }
-    single<SearchHistoryRepository> { SearchHistoryDataSource(androidContext()) }
+    single<SearchHistoryRepository> { SearchHistoryLocalDataSource(get()) }
 }
 
 val viewModelModule = module {
     viewModel { SearchViewModel(get(), get()) }
     viewModel { (route: ProfileRoute) -> ProfileViewModel(route, get(), get(), get()) }
     viewModel { (route: MatchDetailRoute) -> MatchDetailViewModel(route, get(), get()) }
+    viewModel { (route: AffinityRoute) -> AffinityViewModel(route, get(), get()) }
 }
 
-val appModules = listOf(networkModule, dataModule, viewModelModule)
+val appModules = listOf(networkModule, databaseModule, dataModule, viewModelModule)

@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.example.legendanalytics.R
+import com.example.legendanalytics.domain.model.ARENA_GAME_MODE
 import com.example.legendanalytics.domain.model.AppError
 import com.example.legendanalytics.domain.model.MatchOutcome
 import com.example.legendanalytics.domain.util.TimeAgo
@@ -50,7 +51,7 @@ fun queueLabelRes(queueId: Int): Int? = when (queueId) {
     480 -> R.string.queue_swiftplay
     450 -> R.string.queue_aram
     2400 -> R.string.queue_aram_mayhem
-    1700, 1710 -> R.string.queue_arena
+    1700, 1710, 1750 -> R.string.queue_arena
     900, 1010, 1900 -> R.string.queue_urf
     1020 -> R.string.queue_one_for_all
     1300 -> R.string.queue_nexus_blitz
@@ -61,8 +62,16 @@ fun queueLabelRes(queueId: Int): Int? = when (queueId) {
 }
 
 @Composable
-fun queueLabel(queueId: Int, gameMode: String): String =
-    queueLabelRes(queueId)?.let { stringResource(it) } ?: gameMode
+fun queueLabel(queueId: Int, gameMode: String): String {
+    val res = queueLabelRes(queueId) ?: if (gameMode == ARENA_GAME_MODE) R.string.queue_arena else null
+    return res?.let { stringResource(it) } ?: gameMode
+}
+
+/** "1re place", "4e place". */
+@Composable
+fun placementLabel(placement: Int): String =
+    if (placement == 1) stringResource(R.string.placement_first)
+    else stringResource(R.string.placement_other, placement)
 
 @Composable
 fun kdaLabel(kda: Double): String =

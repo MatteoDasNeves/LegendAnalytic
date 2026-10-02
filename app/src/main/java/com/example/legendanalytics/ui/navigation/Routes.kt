@@ -15,6 +15,15 @@ data class ProfileRoute(
     val region: Region,
 ) : NavKey
 
+/** Affinités du joueur avec ses champions. */
+@Serializable
+data class AffinityRoute(
+    val puuid: String,
+    val gameName: String,
+    val tagLine: String,
+    val region: Region,
+) : NavKey
+
 @Serializable
 data class MatchDetailRoute(
     val matchId: String,

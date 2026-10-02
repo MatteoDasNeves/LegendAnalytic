@@ -1,6 +1,8 @@
 package com.example.legendanalytics.data.mapper
 
 import com.example.legendanalytics.data.remote.dto.AccountDto
+import com.example.legendanalytics.data.remote.dto.ChampionListDto
+import com.example.legendanalytics.data.remote.dto.ChampionMasteryDto
 import com.example.legendanalytics.data.remote.dto.LeagueEntryDto
 import com.example.legendanalytics.data.remote.dto.MatchDto
 import com.example.legendanalytics.data.remote.dto.ObjectivesDto
@@ -9,6 +11,9 @@ import com.example.legendanalytics.data.remote.dto.SummonerDto
 import com.example.legendanalytics.data.remote.dto.SummonerSpellsDto
 import com.example.legendanalytics.data.remote.dto.TeamDto
 import com.example.legendanalytics.domain.model.Account
+import com.example.legendanalytics.domain.model.ChampionClass
+import com.example.legendanalytics.domain.model.ChampionInfo
+import com.example.legendanalytics.domain.model.ChampionMastery
 import com.example.legendanalytics.domain.model.Match
 import com.example.legendanalytics.domain.model.Participant
 import com.example.legendanalytics.domain.model.PlayerProfile
@@ -39,7 +44,10 @@ fun LeagueEntryDto.toDomain(): RankedEntry? {
     )
 }
 
-fun SummonerDto.toProfile(leagues: List<LeagueEntryDto>): PlayerProfile {
+fun SummonerDto.toProfile(
+    leagues: List<LeagueEntryDto>,
+    masteries: List<ChampionMasteryDto> = emptyList(),
+): PlayerProfile {
     val entries = leagues.mapNotNull { it.toDomain() }
     return PlayerProfile(
         puuid = puuid,
@@ -47,8 +55,16 @@ fun SummonerDto.toProfile(leagues: List<LeagueEntryDto>): PlayerProfile {
         profileIconId = profileIconId,
         soloDuo = entries.firstOrNull { it.queue == RankedQueue.SOLO_DUO },
         flex = entries.firstOrNull { it.queue == RankedQueue.FLEX },
+        topMasteries = masteries.map { it.toDomain() }.sortedByDescending { it.points },
     )
 }
+
+fun ChampionMasteryDto.toDomain(): ChampionMastery = ChampionMastery(
+    championId = championId,
+    level = championLevel,
+    points = championPoints,
+    lastPlayMillis = lastPlayTime,
+)
 
 fun MatchDto.toDomain(): Match {
     // Avant fin 2021, gameDuration était en millisecondes et gameEndTimestamp absent.
@@ -87,6 +103,8 @@ fun ParticipantDto.toDomain(): Participant = Participant(
     summonerSpells = listOf(summoner1Id, summoner2Id),
     win = win,
     earlySurrender = gameEndedInEarlySurrender,
+    placement = placement.takeIf { it > 0 },
+    subteamId = playerSubteamId.takeIf { it > 0 },
 )
 
 fun TeamDto.toDomain(): Team = Team(
@@ -108,3 +126,15 @@ fun ObjectivesDto.toDomain(): TeamObjectives = TeamObjectives(
 /** id numérique -> fichier image, ex. 4 -> "SummonerFlash.png". */
 fun SummonerSpellsDto.toImageMap(): Map<Int, String> =
     data.values.mapNotNull { spell -> spell.key.toIntOrNull()?.let { it to spell.image.full } }.toMap()
+
+/** id numérique -> identifiants Data Dragon, ex. 62 -> ("MonkeyKing", "Wukong"). */
+fun ChampionListDto.toChampionMap(): Map<Int, ChampionInfo> =
+    data.values.mapNotNull { champ ->
+        champ.key.toIntOrNull()?.let {
+            it to ChampionInfo(
+                id = champ.id,
+                name = champ.name.ifBlank { champ.id },
+                classes = champ.tags.mapNotNull(ChampionClass::fromTag),
+            )
+        }
+    }.toMap()

@@ -40,11 +40,70 @@
     <string name="rank_lp">%1$d LP</string>
     <string name="rank_record">%1$dV %2$dD</string>
     <string name="rank_winrate">%1$d %% de victoires</string>
+    <string name="rank_winrate_short">%1$d %%</string>
+    <string name="profile_region_tag">#%1$s · %2$s</string>
+
+    <!-- Bilan -->
+    <string name="section_overview">Bilan</string>
+    <string name="section_ranks">Classement</string>
+    <string name="section_mains">Champions principaux</string>
+    <string name="section_history">Historique</string>
+    <string name="overview_ring_season">saison</string>
+    <string name="overview_ring_recent">récent</string>
+    <string name="overview_ranked_games">parties classées cette saison</string>
+    <string name="overview_recent_games">parties récentes analysées</string>
+    <string name="overview_wins">%1$d victoires</string>
+    <string name="overview_losses">%1$d défaites</string>
+    <string name="overview_form">Forme récente</string>
+    <string name="overview_recent_line">Sur les %1$d dernières : %2$dV %3$dD · %4$d %%</string>
+    <string name="overview_average_kda">Moyenne %1$s / %2$s / %3$s · %4$s</string>
+    <string name="overview_no_recent">Aucune partie récente à analyser.</string>
+    <string name="form_letter_victory">V</string>
+    <string name="form_letter_defeat">D</string>
+    <string name="form_letter_remake">R</string>
+
+    <!-- Champions principaux -->
+    <string name="main_rank">#%1$d</string>
+    <string name="main_mastery_level">Maîtrise %1$d</string>
+    <string name="main_mastery_points">%1$s points</string>
+    <plurals name="main_recent">
+        <item quantity="one">%1$d partie · %2$d %%</item>
+        <item quantity="other">%1$d parties · %2$d %%</item>
+    </plurals>
+    <string name="main_not_recent">Pas joué récemment</string>
+    <string name="mains_empty">Pas assez de données pour déterminer les champions principaux.</string>
+
+    <string name="profile_all_affinities">Voir toutes les affinités</string>
+
+    <!-- Affinités -->
+    <string name="affinity_title">Affinités</string>
+    <string name="affinity_filter_all">Tous</string>
+    <string name="affinity_empty">Aucune maîtrise de champion pour ce joueur.</string>
+    <string name="affinity_mastery">Maîtrise %1$d · %2$s pts</string>
+    <string name="affinity_last_played">Dernière partie %1$s</string>
+    <string name="class_assassin">Assassin</string>
+    <string name="class_fighter">Combattant</string>
+    <string name="class_mage">Mage</string>
+    <string name="class_marksman">Tireur</string>
+    <string name="class_support">Support</string>
+    <string name="class_tank">Tank</string>
+
+    <!-- Historique -->
+    <string name="day_today">Aujourd\'hui</string>
+    <string name="day_yesterday">Hier</string>
+    <string name="cs_per_min">%1$d CS · %2$s/min</string>
+
+    <!-- Tableau des scores -->
+    <string name="scoreboard_winner">Vainqueur</string>
+    <string name="scoreboard_gold">Or</string>
+    <string name="scoreboard_kills">Kills</string>
 
     <!-- Parties -->
     <string name="outcome_victory">Victoire</string>
     <string name="outcome_defeat">Défaite</string>
     <string name="outcome_remake">Remake</string>
+    <string name="placement_first">1re place</string>
+    <string name="placement_other">%1$de place</string>
     <string name="kda_ratio">%1$s KDA</string>
     <string name="kda_perfect">Parfait</string>
     <string name="cs_value">%1$d CS (%2$s)</string>

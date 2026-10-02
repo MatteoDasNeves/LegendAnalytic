@@ -1,16 +1,15 @@
 package com.example.legendanalytics.ui.profile
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,113 +24,150 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.example.legendanalytics.R
-import com.example.legendanalytics.domain.model.MatchOutcome
-import com.example.legendanalytics.domain.util.TimeAgo
-import com.example.legendanalytics.ui.common.ChampionIcon
-import com.example.legendanalytics.ui.common.ItemsRow
-import com.example.legendanalytics.ui.common.SpellsColumn
+import com.example.legendanalytics.ui.common.GameImage
+import com.example.legendanalytics.ui.common.color
 import com.example.legendanalytics.ui.common.formatDecimal
 import com.example.legendanalytics.ui.common.formatDuration
 import com.example.legendanalytics.ui.common.kdaLabel
-import com.example.legendanalytics.ui.common.label
 import com.example.legendanalytics.ui.common.labelRes
+import com.example.legendanalytics.ui.common.placementLabel
 import com.example.legendanalytics.ui.common.queueLabel
 import com.example.legendanalytics.ui.model.MatchCardUi
 import com.example.legendanalytics.ui.theme.LegendColors
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
-fun MatchOutcome.accentColor(): Color = when (this) {
-    MatchOutcome.VICTORY -> LegendColors.Victory
-    MatchOutcome.DEFEAT -> LegendColors.Defeat
-    MatchOutcome.REMAKE -> LegendColors.Remake
-}
+private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
-fun MatchOutcome.backgroundColor(): Color = when (this) {
-    MatchOutcome.VICTORY -> LegendColors.VictoryBackground
-    MatchOutcome.DEFEAT -> LegendColors.DefeatBackground
-    MatchOutcome.REMAKE -> LegendColors.RemakeBackground
+/** Couleur du ratio KDA : or au-dessus de 4, bleu au-dessus de 3, neutre sinon. */
+fun kdaColor(kda: Double): Color = when {
+    kda >= 4.0 -> LegendColors.Gold
+    kda >= 3.0 -> LegendColors.Victory
+    else -> LegendColors.Muted
 }
 
 @Composable
 fun MatchCard(match: MatchCardUi, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val accent = match.outcome.accentColor()
-    Row(
+    val accent = match.outcome.color()
+    val portraitShape = RoundedCornerShape(16.dp)
+    val endTime = Instant.ofEpochMilli(match.gameEndMillis).atZone(ZoneId.systemDefault()).format(timeFormatter)
+
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .height(IntrinsicSize.Min)
-            .clip(RoundedCornerShape(8.dp))
-            .background(match.outcome.backgroundColor())
-            .clickable(onClick = onClick),
+            .clip(MaterialTheme.shapes.medium)
+            .background(LegendColors.Surface)
+            .clickable(onClick = onClick)
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        // Liseré coloré victoire / défaite.
-        Box(Modifier.width(6.dp).fillMaxHeight().background(accent))
-        Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            // Portrait encadré de la couleur du résultat.
+            Box {
+                GameImage(
+                    url = match.championIconUrl,
+                    contentDescription = match.championDisplayName,
+                    size = 56.dp,
+                    shape = portraitShape,
+                    modifier = Modifier.border(BorderStroke(2.dp, accent), portraitShape),
+                )
                 Text(
-                    queueLabel(match.queueId, match.gameMode),
+                    match.championLevel.toString(),
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(3.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Color.Black.copy(alpha = 0.75f))
+                        .padding(horizontal = 4.dp),
+                )
+            }
+            Spacer(Modifier.width(12.dp))
+
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(
+                    buildAnnotatedString {
+                        withStyle(SpanStyle(color = accent, fontWeight = FontWeight.Bold)) {
+                            append(match.placement?.let { placementLabel(it) } ?: stringResource(match.outcome.labelRes()))
+                        }
+                        withStyle(SpanStyle(color = LegendColors.Muted)) {
+                            append("  ·  ")
+                            append(queueLabel(match.queueId, match.gameMode))
+                        }
+                    },
                     style = MaterialTheme.typography.labelLarge,
-                    color = accent,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    match.championDisplayName,
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
-                Spacer(Modifier.width(8.dp))
                 Text(
-                    TimeAgo.between(match.gameEndMillis, System.currentTimeMillis()).label(),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.weight(1f))
-                Text(
-                    "${stringResource(match.outcome.labelRes())} · ${formatDuration(match.durationSeconds)}",
-                    style = MaterialTheme.typography.labelMedium,
+                    "${formatDuration(match.durationSeconds)} · $endTime",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = LegendColors.Muted,
                 )
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box {
-                    ChampionIcon(match.championIconUrl, match.championName, size = 48.dp)
-                    Text(
-                        match.championLevel.toString(),
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(Color.Black.copy(alpha = 0.7f))
-                            .padding(horizontal = 3.dp),
-                    )
-                }
-                Spacer(Modifier.width(4.dp))
-                SpellsColumn(match.spellIconUrls, spellSize = 22.dp)
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        buildAnnotatedString {
-                            append("${match.kills} / ")
-                            withStyle(SpanStyle(color = LegendColors.Defeat)) { append(match.deaths.toString()) }
-                            append(" / ${match.assists}")
-                        },
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        kdaLabel(match.kda),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        stringResource(R.string.cs_value, match.creepScore, formatDecimal(match.csPerMinute, 1)),
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                    Text(
-                        stringResource(R.string.kill_participation, match.killParticipation),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+            Spacer(Modifier.width(8.dp))
+
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    buildAnnotatedString {
+                        append("${match.kills}/")
+                        withStyle(SpanStyle(color = LegendColors.Defeat)) { append(match.deaths.toString()) }
+                        append("/${match.assists}")
+                    },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Black,
+                )
+                Text(
+                    kdaLabel(match.kda),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = kdaColor(match.kda),
+                )
+            }
+        }
+
+        // Ligne basse : sorts + objets, puis CS et participation.
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically) {
+                match.spellIconUrls.forEach { GameImage(it, contentDescription = null, size = 18.dp) }
+                Spacer(Modifier.width(5.dp))
+                match.itemIconUrls.forEach {
+                    GameImage(it, contentDescription = null, size = 18.dp, shape = RoundedCornerShape(5.dp))
                 }
             }
-            ItemsRow(match.itemIconUrls, itemSize = 24.dp)
+            Spacer(Modifier.width(8.dp))
+            // Prend la place restante : sur un écran étroit, le texte se tronque au lieu de déborder.
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                // Pas de sbires en Arena : le CS n'y a pas de sens.
+                if (match.placement == null) {
+                    Text(
+                        stringResource(R.string.cs_per_min, match.creepScore, formatDecimal(match.csPerMinute, 1)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = LegendColors.Muted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Text(
+                    stringResource(R.string.kill_participation, match.killParticipation),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = LegendColors.Muted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }

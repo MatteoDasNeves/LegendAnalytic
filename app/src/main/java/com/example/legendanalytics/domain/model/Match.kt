@@ -1,7 +1,12 @@
 package com.example.legendanalytics.domain.model
 
+import kotlinx.serialization.Serializable
+
 enum class MatchOutcome { VICTORY, DEFEAT, REMAKE }
 
+const val ARENA_GAME_MODE = "CHERRY"
+
+@Serializable
 data class Participant(
     val puuid: String,
     val riotId: RiotId?,
@@ -20,8 +25,12 @@ data class Participant(
     val summonerSpells: List<Int>,
     val win: Boolean,
     val earlySurrender: Boolean,
+    /** Arena uniquement : classement final du duo et identifiant du duo. */
+    val placement: Int? = null,
+    val subteamId: Int? = null,
 )
 
+@Serializable
 data class TeamObjectives(
     val towers: Int,
     val inhibitors: Int,
@@ -32,12 +41,14 @@ data class TeamObjectives(
     val champions: Int,
 )
 
+@Serializable
 data class Team(
     val teamId: Int,
     val win: Boolean,
     val objectives: TeamObjectives?,
 )
 
+@Serializable
 data class Match(
     val matchId: String,
     val queueId: Int,
@@ -50,6 +61,10 @@ data class Match(
     val participants: List<Participant>,
     val teams: List<Team>,
 ) {
+    /** L'Arena se joue en duos classés de 1 à 8 : les équipes 100/200 n'y ont pas de sens. */
+    val isArena: Boolean
+        get() = gameMode == ARENA_GAME_MODE || participants.any { it.subteamId != null }
+
     fun participant(puuid: String): Participant? = participants.firstOrNull { it.puuid == puuid }
 
     fun outcomeFor(participant: Participant): MatchOutcome = when {

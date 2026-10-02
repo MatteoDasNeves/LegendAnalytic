@@ -1,5 +1,6 @@
 package com.example.legendanalytics.data.remote
 
+import com.example.legendanalytics.data.remote.dto.ChampionListDto
 import com.example.legendanalytics.data.remote.dto.SummonerSpellsDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -13,6 +14,9 @@ class DataDragonApi(private val client: HttpClient) {
 
     suspend fun getSummonerSpells(version: String): SummonerSpellsDto =
         get("${DataDragonUrls.BASE_URL}/cdn/$version/data/fr_FR/summoner.json").body()
+
+    suspend fun getChampions(version: String): ChampionListDto =
+        get("${DataDragonUrls.BASE_URL}/cdn/$version/data/fr_FR/champion.json").body()
 
     private suspend fun get(url: String): HttpResponse {
         val response = client.get(url)
@@ -30,10 +34,18 @@ object DataDragonUrls {
     /** Noms de champions renvoyés par match-v5 qui diffèrent du nom de fichier Data Dragon. */
     private val championFileOverrides = mapOf("FiddleSticks" to "Fiddlesticks")
 
-    fun champion(version: String, championName: String): String {
-        val file = championFileOverrides[championName] ?: championName
-        return "$BASE_URL/cdn/$version/img/champion/$file.png"
-    }
+    private fun championFile(championName: String) = championFileOverrides[championName] ?: championName
+
+    fun champion(version: String, championName: String): String =
+        "$BASE_URL/cdn/$version/img/champion/${championFile(championName)}.png"
+
+    /** Illustration carrée recadrée sur le champion (non versionnée). */
+    fun championTile(championName: String): String =
+        "$BASE_URL/cdn/img/champion/tiles/${championFile(championName)}_0.jpg"
+
+    /** Illustration plein format du skin de base (non versionnée). */
+    fun championSplash(championName: String): String =
+        "$BASE_URL/cdn/img/champion/splash/${championFile(championName)}_0.jpg"
 
     fun item(version: String, itemId: Int): String = "$BASE_URL/cdn/$version/img/item/$itemId.png"
 

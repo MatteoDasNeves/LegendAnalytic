@@ -6,10 +6,12 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -36,33 +38,41 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.legendanalytics.R
 import com.example.legendanalytics.domain.model.MatchOutcome
-import com.example.legendanalytics.domain.model.TeamObjectives
 import com.example.legendanalytics.domain.util.TimeAgo
 import com.example.legendanalytics.ui.common.ChampionIcon
 import com.example.legendanalytics.ui.common.ErrorView
 import com.example.legendanalytics.ui.common.ItemsRow
 import com.example.legendanalytics.ui.common.LoadingView
 import com.example.legendanalytics.ui.common.SpellsColumn
+import com.example.legendanalytics.ui.common.LegendDot
+import com.example.legendanalytics.ui.common.SectionTitle
 import com.example.legendanalytics.ui.common.UiState
+import com.example.legendanalytics.ui.common.WidthClass
+import com.example.legendanalytics.ui.common.centeredMaxWidth
+import com.example.legendanalytics.ui.common.widthClassOf
+import com.example.legendanalytics.ui.common.color
 import com.example.legendanalytics.ui.common.dataOrNull
 import com.example.legendanalytics.ui.common.formatCompact
 import com.example.legendanalytics.ui.common.formatDuration
 import com.example.legendanalytics.ui.common.kdaLabel
 import com.example.legendanalytics.ui.common.label
 import com.example.legendanalytics.ui.common.labelRes
+import com.example.legendanalytics.ui.common.placementLabel
 import com.example.legendanalytics.ui.common.queueLabel
 import com.example.legendanalytics.ui.model.MatchDetailUi
 import com.example.legendanalytics.ui.model.ParticipantUi
 import com.example.legendanalytics.ui.model.TeamUi
 import com.example.legendanalytics.ui.navigation.ProfileRoute
-import com.example.legendanalytics.ui.profile.accentColor
-import com.example.legendanalytics.ui.profile.backgroundColor
 import com.example.legendanalytics.ui.theme.LegendColors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -119,99 +129,204 @@ fun MatchDetailScreen(
 
 @Composable
 private fun MatchDetailContent(detail: MatchDetailUi, onParticipantClick: (ParticipantUi) -> Unit) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(12.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        detail.teams.forEach { team ->
-            item(key = "team_${team.teamId}") {
-                Spacer(Modifier.height(6.dp))
-                TeamHeader(team)
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        // Sur grand écran, les équipes s'affichent côte à côte (deux par deux en Arena).
+        val sideBySide = widthClassOf(maxWidth) == WidthClass.EXPANDED
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            // Tableau des scores face à face, seulement pour les modes à deux équipes (pas l'Arena).
+            if (detail.teams.size == 2 && detail.teams.none { it.placement != null }) {
+                item(key = "scoreboard") {
+                    Scoreboard(detail.teams[0], detail.teams[1], Modifier.centeredMaxWidth())
+                }
             }
-            itemsIndexed(team.participants, key = { index, _ -> "p_${team.teamId}_$index" }) { _, participant ->
-                ParticipantRow(
-                    participant = participant,
-                    outcome = team.outcome,
-                    onClick = { onParticipantClick(participant) },
-                )
+            if (sideBySide) {
+                detail.teams.chunked(2).forEach { pair ->
+                    item(key = "teams_${pair.first().teamId}") {
+                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                            pair.forEach { team ->
+                                TeamColumn(team, onParticipantClick, Modifier.weight(1f))
+                            }
+                            // Garde la même largeur de colonne pour une équipe seule en fin de liste.
+                            if (pair.size == 1) Spacer(Modifier.weight(1f))
+                        }
+                    }
+                }
+            } else {
+                detail.teams.forEach { team ->
+                    item(key = "team_${team.teamId}") { TeamTitle(team, Modifier.centeredMaxWidth()) }
+                    itemsIndexed(team.participants, key = { index, _ -> "p_${team.teamId}_$index" }) { _, participant ->
+                        ParticipantRow(
+                            participant = participant,
+                            onClick = { onParticipantClick(participant) },
+                            modifier = Modifier.centeredMaxWidth(),
+                        )
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun TeamHeader(team: TeamUi) {
-    val accent = team.outcome.accentColor()
-    val isWinner = team.outcome == MatchOutcome.VICTORY
+private fun TeamColumn(team: TeamUi, onParticipantClick: (ParticipantUi) -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        TeamTitle(team)
+        team.participants.forEach { participant ->
+            ParticipantRow(participant = participant, onClick = { onParticipantClick(participant) })
+        }
+    }
+}
+
+@Composable
+private fun teamName(team: TeamUi): String =
+    stringResource(if (team.isBlueSide) R.string.team_blue else R.string.team_red)
+
+@Composable
+private fun Scoreboard(left: TeamUi, right: TeamUi, modifier: Modifier = Modifier) {
     Column(
-        modifier = Modifier
+        modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .then(if (isWinner) Modifier.border(BorderStroke(2.dp, accent), RoundedCornerShape(8.dp)) else Modifier)
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+            .clip(MaterialTheme.shapes.medium)
+            .background(LegendColors.Surface)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
+            ScoreSide(left, Alignment.Start, Modifier.weight(1f))
             Text(
-                stringResource(team.outcome.labelRes()),
-                color = accent,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                buildAnnotatedString {
+                    withStyle(SpanStyle(color = left.outcome.color())) { append(left.totalKills.toString()) }
+                    withStyle(SpanStyle(color = LegendColors.Muted)) { append("  :  ") }
+                    withStyle(SpanStyle(color = right.outcome.color())) { append(right.totalKills.toString()) }
+                },
+                style = MaterialTheme.typography.headlineMedium,
             )
-            Spacer(Modifier.width(8.dp))
-            Text(
-                stringResource(if (team.isBlueSide) R.string.team_blue else R.string.team_red),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.weight(1f))
-            Text(
-                stringResource(R.string.team_kills_gold, team.totalKills, formatCompact(team.totalGold)),
-                style = MaterialTheme.typography.bodySmall,
-            )
+            ScoreSide(right, Alignment.End, Modifier.weight(1f))
         }
-        team.objectives?.let { ObjectivesRow(it) }
+        // Les barres suivent le code couleur du résultat (bleu = vainqueur), pas le côté de la carte.
+        val colors = left.outcome.color() to right.outcome.color()
+        ComparisonRow(stringResource(R.string.scoreboard_gold), left.totalGold, right.totalGold, colors, ::formatCompact)
+        val l = left.objectives
+        val r = right.objectives
+        if (l != null && r != null) {
+            ComparisonRow(stringResource(R.string.objective_towers), l.towers, r.towers, colors)
+            ComparisonRow(stringResource(R.string.objective_dragons), l.dragons, r.dragons, colors)
+            ComparisonRow(stringResource(R.string.objective_barons), l.barons, r.barons, colors)
+            ComparisonRow(stringResource(R.string.objective_grubs), l.voidGrubs, r.voidGrubs, colors)
+            ComparisonRow(stringResource(R.string.objective_heralds), l.riftHeralds, r.riftHeralds, colors)
+            ComparisonRow(stringResource(R.string.objective_inhibitors), l.inhibitors, r.inhibitors, colors)
+        }
     }
 }
 
 @Composable
-private fun ObjectivesRow(objectives: TeamObjectives) {
-    val values = listOf(
-        R.string.objective_towers to objectives.towers,
-        R.string.objective_inhibitors to objectives.inhibitors,
-        R.string.objective_dragons to objectives.dragons,
-        R.string.objective_barons to objectives.barons,
-        R.string.objective_heralds to objectives.riftHeralds,
-        R.string.objective_grubs to objectives.voidGrubs,
-    )
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        values.forEach { (label, value) ->
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(value.toString(), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
-                Text(
-                    stringResource(label),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                )
+private fun ScoreSide(team: TeamUi, alignment: Alignment.Horizontal, modifier: Modifier = Modifier) {
+    Column(modifier, horizontalAlignment = alignment, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(teamName(team), style = MaterialTheme.typography.labelMedium, color = LegendColors.Muted)
+        Text(
+            stringResource(team.outcome.labelRes()),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = team.outcome.color(),
+        )
+        if (team.outcome == MatchOutcome.VICTORY) {
+            Text(
+                stringResource(R.string.scoreboard_winner).uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(LegendColors.Gold)
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
+            )
+        }
+    }
+}
+
+/** Valeur gauche | libellé | valeur droite, avec deux barres qui partent du centre. */
+@Composable
+private fun ComparisonRow(
+    label: String,
+    left: Int,
+    right: Int,
+    colors: Pair<Color, Color>,
+    format: (Int) -> String = { it.toString() },
+) {
+    val total = (left + right).coerceAtLeast(1)
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                format(left),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = if (left > right) FontWeight.Black else FontWeight.Normal,
+                modifier = Modifier.weight(1f),
+            )
+            Text(label, style = MaterialTheme.typography.labelMedium, color = LegendColors.Muted)
+            Text(
+                format(right),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = if (right > left) FontWeight.Black else FontWeight.Normal,
+                textAlign = TextAlign.End,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        Row(Modifier.fillMaxWidth().height(4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Box(Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(2.dp)).background(LegendColors.EmptySlot)) {
+                if (left > 0) {
+                    Box(
+                        Modifier
+                            .align(Alignment.CenterEnd)
+                            .fillMaxWidth(left.toFloat() / total)
+                            .fillMaxHeight()
+                            .background(colors.first),
+                    )
+                }
+            }
+            Box(Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(2.dp)).background(LegendColors.EmptySlot)) {
+                if (right > 0) {
+                    Box(
+                        Modifier
+                            .fillMaxWidth(right.toFloat() / total)
+                            .fillMaxHeight()
+                            .background(colors.second),
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ParticipantRow(participant: ParticipantUi, outcome: MatchOutcome, onClick: () -> Unit) {
-    val shape = RoundedCornerShape(8.dp)
+private fun TeamTitle(team: TeamUi, modifier: Modifier = Modifier) {
+    Row(
+        modifier.padding(top = 16.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        LegendDot(team.outcome.color())
+        Spacer(Modifier.width(8.dp))
+        SectionTitle(
+            team.placement?.let { placementLabel(it) }
+                ?: "${teamName(team)} · ${stringResource(team.outcome.labelRes())}",
+            trailing = stringResource(R.string.team_kills_gold, team.totalKills, formatCompact(team.totalGold)),
+        )
+    }
+}
+
+@Composable
+private fun ParticipantRow(participant: ParticipantUi, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val shape = RoundedCornerShape(14.dp)
     val clickable = participant.riotId != null
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(outcome.backgroundColor())
+            .background(if (participant.isFocused) LegendColors.SurfaceHigh else LegendColors.Surface)
             .then(
-                if (participant.isFocused) Modifier.border(BorderStroke(2.dp, LegendColors.Highlight), shape)
+                if (participant.isFocused) Modifier.border(BorderStroke(1.5.dp, LegendColors.Gold), shape)
                 else Modifier,
             )
             .clickable(enabled = clickable, onClick = onClick)
@@ -239,7 +354,7 @@ private fun ParticipantRow(participant: ParticipantUi, outcome: MatchOutcome, on
                     participant.riotId?.gameName ?: stringResource(R.string.unknown_player),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = if (participant.isFocused) FontWeight.Bold else FontWeight.Normal,
-                    color = if (participant.isFocused) LegendColors.Highlight else Color.Unspecified,
+                    color = if (participant.isFocused) LegendColors.Gold else Color.Unspecified,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )

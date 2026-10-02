@@ -1,5 +1,8 @@
 package com.example.legendanalytics.domain.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class RiotId(val gameName: String, val tagLine: String) {
 
     override fun toString(): String = "$gameName#$tagLine"

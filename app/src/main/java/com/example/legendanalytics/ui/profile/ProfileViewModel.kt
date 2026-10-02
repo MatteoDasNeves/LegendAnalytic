@@ -12,7 +12,9 @@ import com.example.legendanalytics.domain.repository.MatchRepository
 import com.example.legendanalytics.domain.repository.PlayerRepository
 import com.example.legendanalytics.domain.repository.StaticDataRepository
 import com.example.legendanalytics.ui.common.UiState
+import com.example.legendanalytics.ui.model.MainChampionUi
 import com.example.legendanalytics.ui.model.MatchCardUi
+import com.example.legendanalytics.ui.model.OverviewUi
 import com.example.legendanalytics.ui.model.ProfileHeaderUi
 import com.example.legendanalytics.ui.model.UiMapper
 import com.example.legendanalytics.ui.navigation.ProfileRoute
@@ -42,6 +44,8 @@ data class ProfileUiState(
 
 data class ProfileContent(
     val header: ProfileHeaderUi,
+    val overview: OverviewUi,
+    val mains: List<MainChampionUi>,
     val matches: List<MatchCardUi>,
 )
 
@@ -135,8 +139,11 @@ class ProfileViewModel(
     private fun publish(canLoadMore: Boolean, message: ProfileMessage?) {
         val currentProfile = profile ?: return
         val mapper = UiMapper(staticData)
+        val mains = mapper.mains(currentProfile, matches, route.puuid)
         val content = ProfileContent(
-            header = mapper.profileHeader(riotId, currentProfile),
+            header = mapper.profileHeader(riotId, route.region, currentProfile, mains),
+            overview = mapper.overview(currentProfile, matches, route.puuid),
+            mains = mains,
             matches = matches.mapNotNull { mapper.matchCard(it, route.puuid) },
         )
         _state.update {

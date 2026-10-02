@@ -1,15 +1,19 @@
 package com.example.legendanalytics.data
 
 import com.example.legendanalytics.data.mapper.toDomain
+import com.example.legendanalytics.data.mapper.toChampionMap
 import com.example.legendanalytics.data.mapper.toImageMap
 import com.example.legendanalytics.data.mapper.toProfile
 import com.example.legendanalytics.data.remote.DataDragonUrls
 import com.example.legendanalytics.data.remote.HttpClientFactory
 import com.example.legendanalytics.data.remote.dto.AccountDto
+import com.example.legendanalytics.data.remote.dto.ChampionListDto
+import com.example.legendanalytics.data.remote.dto.ChampionMasteryDto
 import com.example.legendanalytics.data.remote.dto.LeagueEntryDto
 import com.example.legendanalytics.data.remote.dto.MatchDto
 import com.example.legendanalytics.data.remote.dto.SummonerDto
 import com.example.legendanalytics.data.remote.dto.SummonerSpellsDto
+import com.example.legendanalytics.domain.model.ChampionInfo
 import com.example.legendanalytics.domain.model.MatchOutcome
 import com.example.legendanalytics.domain.model.RiotId
 import org.junit.Assert.assertEquals
@@ -114,7 +118,36 @@ class DtoParsingTest {
     }
 
     @Test
+    fun `maitrises triees par points et table des champions`() {
+        val masteries = json.decodeFromString<List<ChampionMasteryDto>>(
+            """
+            [{"puuid":"p","championId":268,"championLevel":39,"championPoints":396500,"lastPlayTime":1,"milestoneGrades":[]},
+             {"puuid":"p","championId":7,"championLevel":60,"championPoints":628773,"lastPlayTime":2,"nextSeasonMilestone":{"rewardMarks":2}}]
+            """.trimIndent(),
+        )
+        val summoner = SummonerDto(puuid = "p", profileIconId = 1, summonerLevel = 30)
+        val profile = summoner.toProfile(leagues = emptyList(), masteries = masteries)
+        assertEquals(listOf(7, 268), profile.topMasteries.map { it.championId })
+        assertEquals(60, profile.topMasteries.first().level)
+
+        val champions = json.decodeFromString<ChampionListDto>(
+            """
+            {"type":"champion","data":{
+              "MonkeyKing":{"version":"16.19.1","id":"MonkeyKing","key":"62","name":"Wukong","title":"le Roi des singes"},
+              "Nunu":{"id":"Nunu","key":"20","name":"Nunu et Willump"}
+            }}
+            """.trimIndent(),
+        ).toChampionMap()
+        assertEquals(ChampionInfo("MonkeyKing", "Wukong"), champions[62])
+        assertEquals("Nunu et Willump", champions[20]?.name)
+    }
+
+    @Test
     fun `urls Data Dragon et cas particulier Fiddlesticks`() {
+        assertEquals(
+            "https://ddragon.leagueoflegends.com/cdn/img/champion/tiles/Fiddlesticks_0.jpg",
+            DataDragonUrls.championTile("FiddleSticks"),
+        )
         assertEquals(
             "https://ddragon.leagueoflegends.com/cdn/15.1.1/img/champion/Fiddlesticks.png",
             DataDragonUrls.champion("15.1.1", "FiddleSticks"),

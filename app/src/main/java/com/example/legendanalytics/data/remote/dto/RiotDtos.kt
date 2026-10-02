@@ -80,6 +80,9 @@ data class ParticipantDto(
     val summoner2Id: Int = 0,
     val win: Boolean = false,
     val gameEndedInEarlySurrender: Boolean = false,
+    /** Arena : classement final (1 à 8) et duo du joueur ; 0 dans les autres modes. */
+    val placement: Int = 0,
+    val playerSubteamId: Int = 0,
 )
 
 @Serializable
@@ -104,4 +107,12 @@ data class ObjectivesDto(
 data class ObjectiveDto(
     val first: Boolean = false,
     val kills: Int = 0,
+)
+
+@Serializable
+data class ChampionMasteryDto(
+    val championId: Int,
+    val championLevel: Int = 0,
+    val championPoints: Int = 0,
+    val lastPlayTime: Long = 0,
 )
